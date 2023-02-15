@@ -46,7 +46,7 @@ class QLearningAgent:
         
     def update(self,s,a,r,s_next,done):
         # TO DO: Add own code
-        self.Q_sa[s][a]=(1-self.learning_rate)*self.Q_sa[s][a]+self.learning_rate*( r+ self.gamma * max(self.Q_sa[s])-self.Q_sa[s_next][a])
+        self.Q_sa[s][a]=(1-self.learning_rate)*self.Q_sa[s][a]+self.learning_rate*( r+ self.gamma * max(self.Q_sa[s_next])-self.Q_sa[s][a])
         pass
 
 def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True):
@@ -58,22 +58,24 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
     rewards = []
     state=env.reset()
     done=False
-    rewards_ep=[]
-    while done!=True:
+    #while done!=True:
+    for i in range(0,n_timesteps):
+        print(i)
         action=pi.select_action(state,policy,epsilon)
         next_state,reward,done=env.step(action)
         print(reward)
         pi.update(state,action,reward,next_state,done)
         state=next_state
-        rewards_ep.append(reward)
-    rewards=rewards_ep
+        rewards.append(reward)
+        if done==True:
+            break
     if plot:
         env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during Q-learning execution
 
     return rewards
 
 def test():
-    
+    import matplotlib.pyplot as plt
     n_timesteps = 1000
     gamma = 1.0
     learning_rate = 0.1
@@ -88,6 +90,14 @@ def test():
 
     rewards = q_learning(n_timesteps, learning_rate, gamma, policy, epsilon, temp, plot)
     print("Obtained rewards: {}".format(rewards))
+    plt.figure(figsize=(13, 13))
+    plt.plot(rewards)
+    plt.xlabel(f'Number of episode')
+    plt.ylabel('Rewards')
+    plt.grid(True,which="both",ls="--",c='gray')
+    plt.title('This is the average reward {}'.format(np.average(rewards)))
+    plt.savefig('rewardsQ-learningAgent'+str(n_timesteps)+'steps'+str(gamma)+'gamma'+str(learning_rate)+'learningrate'+str(epsilon)+'epsilon'+str(temp)+'temperature.png')
+    plt.show()
 
 if __name__ == '__main__':
     test()

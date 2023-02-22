@@ -26,7 +26,7 @@ class QLearningAgent:
             if epsilon is None:
                 raise KeyError("Provide an epsilon")
                 
-            if epsilon < sum(self.Q_sa[s][:2]):
+            if epsilon < np.random.randint(0,2,1):
             # TO DO: Add own code
                 a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
             else:
@@ -46,7 +46,7 @@ class QLearningAgent:
         
     def update(self,s,a,r,s_next,done):
         # TO DO: Add own code
-        self.Q_sa[s][a]=(1-self.learning_rate)*self.Q_sa[s][a]+self.learning_rate*( r+ self.gamma * max(self.Q_sa[s_next])-self.Q_sa[s][a])
+        self.Q_sa[s][a]+=(1-self.learning_rate)*self.Q_sa[s][a]+self.learning_rate*( r+ self.gamma * max(self.Q_sa[s_next])-self.Q_sa[s][a])
         pass
 
 def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True):
@@ -63,7 +63,7 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
         print(i)
         action=pi.select_action(state,policy,epsilon)
         next_state,reward,done=env.step(action)
-        print(reward)
+        #print(reward)
         pi.update(state,action,reward,next_state,done)
         state=next_state
         rewards.append(reward)
@@ -92,7 +92,7 @@ def test():
     print("Obtained rewards: {}".format(rewards))
     plt.figure(figsize=(13, 13))
     plt.plot(rewards)
-    plt.xlabel(f'Number of episode')
+    plt.xlabel(f'Number of steps')
     plt.ylabel('Rewards')
     plt.grid(True,which="both",ls="--",c='gray')
     plt.title('This is the average reward {}'.format(np.average(rewards)))

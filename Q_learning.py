@@ -21,12 +21,12 @@ class QLearningAgent:
         self.Q_sa = np.zeros((n_states,n_actions))
         
     def select_action(self, s, policy='egreedy', epsilon=None, temp=None):
-        
+
         if policy == 'egreedy':
             if epsilon is None:
                 raise KeyError("Provide an epsilon")
-                
-            if epsilon < np.random.randint(0,2,1):
+            
+            if epsilon < np.random.randint(0,101,1)/100:
             # TO DO: Add own code
                 a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
             else:
@@ -59,9 +59,10 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
     state=env.reset()
     done=False
     #while done!=True:
+    epsl=epsilon
     for i in range(0,n_timesteps):
-        print(i)
-        action=pi.select_action(state,policy,epsilon)
+        epsl+=2*i/1000000
+        action=pi.select_action(state,policy,epsl)
         next_state,reward,done=env.step(action)
         #print(reward)
         pi.update(state,action,reward,next_state,done)

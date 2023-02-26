@@ -59,27 +59,6 @@ class NstepQLearningAgent:
         self.state = np.append(self.state,[states],axis=0) # state[t+1]
         self.reward = np.append(self.reward,[rewards],axis=0) # reward[t]
         self.done = np.append(self.done, [dones],axis=0)
-        visited_states=[]
-        while t_update!=max_episode_length:# or t_update + self.n <= t:
-            print('This is the terminal state index {} and this is t-update {} and t {}'.format(terminal_state_index,t_update,t))
-            if np.mean(np.equal(self.state[t_update],np.array(52))) == 1:
-                    break
-            # implement first visited check for Monte Carlo (Is this the first time we are here in this episode)
-            if(self.n == np.inf):
-                for visited_state in visited_states:
-                    if np.mean(np.equal(self.state[t_update],visited_state)) == 1:
-                            break
-            visited_states.append(self.state[t_update])
-            # calcualte value for n steps or until the terminal if found
-            mc_estimate = np.sum([self.gamma**(i-t_update) * self.reward[i] for i in range(t_update,min(t_update+self.n,terminal_state_index))])
-            future_estimate = 0
-            if t_update+self.n < terminal_state_index: # if we are not yet at the terminals state
-            # calculate the estimate after n
-                future_estimate = self.gamma**self.n * self.Q_sa[self.state[t_update+self.n],self.action[t_update+self.n]]
-            estimate = mc_estimate + future_estimate                  
-            # improve policy
-            self.Q_sa[self.state[t_update],self.action[t_update]] += self.learning_rate * (estimate - self.Q_sa[self.state[t_update],self.action[t_update]])               
-            t_update += 1                                 
         pass
 
 def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma, 
@@ -108,7 +87,7 @@ def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma,
         returns+=reward
         rewards.append(reward)
         # remember state and reward for later policy updates
-        pi.update(state,action,reward,done,t,terminal_state_index,max_episode_length)
+        pi.update(state,action,reward,done,t,max_episode_length)
         state=next_state
         #if timesteps 
         if done:
@@ -116,9 +95,28 @@ def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma,
             break
             done=False
         t += 1
-        #if i==max_episode_length:
-        #    break
-
+        t_update=0
+        visited_states=[]
+        while t_update!=max_episode_length:# or t_update + self.n <= t:
+            print('This is the terminal state index {} and this is t-update {} and t {}'.format(terminal_state_index,t_update,t))
+            if np.mean(np.equal(self.state[t_update],np.array(52))) == 1:
+                    break
+            # implement first visited check for Monte Carlo (Is this the first time we are here in this episode)
+            if(self.n == np.inf):
+                for visited_state in visited_states:
+                    if np.mean(np.equal(self.state[t_update],visited_state)) == 1:
+                            break
+            visited_states.append(self.state[t_update])
+            # calcualte value for n steps or until the terminal if found
+            mc_estimate = np.sum([self.gamma**(i-t_update) * self.reward[i] for i in range(t_update,min(t_update+self.n,terminal_state_index))])
+            future_estimate = 0
+            if t_update+self.n < terminal_state_index: # if we are not yet at the terminals state
+            # calculate the estimate after n
+                future_estimate = self.gamma**self.n * self.Q_sa[self.state[t_update+self.n],self.action[t_update+self.n]]
+            estimate = mc_estimate + future_estimate                  
+            # improve policy
+            self.Q_sa[self.state[t_update],self.action[t_update]] += self.learning_rate * (estimate - self.Q_sa[self.state[t_update],self.action[t_update]])               
+            t_update += 1           
     if plot:
         env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during n-step Q-learning execution
 

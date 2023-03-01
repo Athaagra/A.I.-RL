@@ -7,7 +7,8 @@ By Thomas Moerland
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
-matplotlib.use('QtAgg') # 'TkAgg'
+print(os.getenv('DISPLAY'))
+matplotlib.use('Qt5Agg') # 'TkAgg'
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle,Circle,Arrow

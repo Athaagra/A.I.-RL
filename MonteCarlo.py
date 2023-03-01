@@ -94,9 +94,9 @@ def monte_carlo(n_timesteps, max_episode_length, learning_rate, gamma,
             rewards.append(reward)
         G={}
         for i in range(-t,0):
-            it=abs(i)-1
+            it=abs(i)-n
             #print(i,it)
-            G[it]=pi.reward[it]+pi.gamma*pi.reward[it+1]
+            G[it]=pi.reward[it]+pi.gamma*pi.reward[it+n]
             #print(G[it])
             if pi.reward[it]>0:
                 print('you have won the game')

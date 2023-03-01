@@ -5,6 +5,7 @@ Practical for course 'Reinforcement Learning',
 Leiden University, The Netherlands
 By Thomas Moerland
 """
+from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 matplotlib.use('TkAgg') # 'TkAgg'
 import numpy as np

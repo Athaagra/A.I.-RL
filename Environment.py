@@ -5,6 +5,7 @@ Practical for course 'Reinforcement Learning',
 Leiden University, The Netherlands
 By Thomas Moerland
 """
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 print(os.getenv('DISPLAY'))

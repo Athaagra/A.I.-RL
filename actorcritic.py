@@ -69,11 +69,21 @@ class Critic(nn.Module):
         self.layer_4 = nn.Linear(state_dim + action_dim, 400)
         self.layer_5 = nn.Linear(400,300)
         self.layer_6 = nn.Linear(300,1)
-        
-    def Ql(self, x, u):
-        xu = torch([x, u], 1)
+    
+    def forward(self, x, u):
+        xu = torch.cat([x, u], 1)
         x1 = F.relu(self.layer_1(xu))
-        x1 = F.relu(self.layer_2(x))
+        x1 = F.relu(self.layer_2(x1))
+        x1 = self.layer_3(x1)
+        
+        x2 = F.relu(self.layer_4(xu))
+        x2 = F.relu(self.layer_5(x2))
+        x2 = self.layer_6(x2)
+        return x1, x2
+    def Ql(self, x, u):
+        xu = torch.cat([x, u], 1)
+        x1 = F.relu(self.layer_1(xu))
+        x1 = F.relu(self.layer_2(x1))
         x1 = self.layer_3(x1)
         return x1
 
@@ -82,7 +92,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Building the whole Training Process into a class
 
-class TDJ(object):
+class TD3(object):
     def __init__(self,state_dim,action_dim,max_action):
         self.actor=Actor(state_dim,action_dim,max_action).to(device)
         self.actor_target=Actor(state_dim,action_dim,max_action).to(device)
@@ -110,7 +120,7 @@ class TDJ(object):
             done=torch.Tensor(batch_dones).to(device)
             
             next_action=self.actor_target(next_state)
-            noise = torch.Tensor(batch_actions).data.normal(0,policy_noise).to(device)
+            noise = torch.Tensor(batch_actions).data.normal_(0,policy_noise).to(device)
             moise = noise.clamp(-noise_clip, noise_clip)
             next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
             target_Q1,target_Q2=self.critic_target(next_state,next_action)
@@ -152,7 +162,7 @@ def evaluate_policy(policy,eval_episodes=10):
     print("Average Reward over the Evaluation Step: %f" % (avg_reward))
     return avg_reward
 #Parameters Initialization
-env_name="HalfCheetahBulletEnv-v0"
+env_name="AntBulletEnv-v0"
 seed = 0
 start_timesteps=1e4
 eval_freq=5e3
@@ -167,28 +177,35 @@ noise_clip=0.5
 policy_freq=2
 
 file_name="%s_%s_%s" % ('TD3', env_name, str(seed))
+print("Settings: %s" % (file_name))
 
-if not os.path.exist("./results"):
+if not os.path.exists("./results"):
     os.makedirs("./results")
 if save_models and  not os.path.exists("./pytorch_models"):
     os.makedirs("./pytorach_models")
 
 env = gym.make(env_name)    
-env.seeed(seed)
+env.seed(seed)
 torch.manual_seed(seed)
 state_dim = env.observation_space.shape[0]
 action_dim=env.action_space.shape[0]
 max_action=float(env.action_space.high[0])
 policy = TD3(state_dim,action_dim,max_action)
-replay_bufer=ReplayBuffer()
+replay_buffer=ReplayBuffer()
 
 evaluations=[evaluate_policy(policy)]
+
+total_timesteps=0
+timesteps_since_eval=0
+episode_num=0
+done=True
+t0=time.time()
 
 while total_timesteps < max_timesteps:
     if done:
         if total_timesteps !=0:
             print("Total Timesteps:{} Episode Num {} Reward {}".format(total_timesteps,episode_num,episode_reward))
-            policy.train(replay_bufer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
+            policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
         
         if timesteps_since_eval >=eval_freq:
             timesteps_since_eval %= eval_freq
@@ -200,7 +217,7 @@ while total_timesteps < max_timesteps:
         done=False
         episode_reward=0
         episode_timesteps=0
-        episode_num+=
+        episode_num+=1
     if total_timesteps < start_timesteps:
         action = env.action_space.sample()
     else:

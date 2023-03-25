@@ -11,20 +11,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 import sys
+import catch as Catch
 HISTORY_LENGTH = 0  
 # #hyperparameters
-D = 4#len(env.reset())*HISTORY_LENGTH
+D = 98#len(env.reset())*HISTORY_LENGTH
 M = 32
-K = 12
+K = 3
 
 
-actions_list=[(0,0),(0,1),(0,2),(0,3),(1,0),(2,0),(1,1),(1,2),(1,3),(2,1),(2,2),(2,3)]
-#print('This is the D {} M {} and K {}'.format(D,M,K))
-#print('This is the D {} M {} and K {}'.format(D,M,K))
-#def softmax(a):
-#   c = np.max(a, axis=1, keepdims=True)
-#   e = np.exp(a-c)
-#   return e/e.sum(axis=-1, keepdims=True)
 
 
 def softmax(x):
@@ -87,9 +81,6 @@ class ANN:
             'b2': self.b2
             }
     def set_params(self, params):
-        #D,K = self.D, self.K
-        #self.W1 = params[:D * K].reshape(D, K)
-        #self.b1 = params[D*K:D*K +K]
         D,M,K = self.D, self.M, self.K
         self.W1 = params[:D * M].reshape(D, M)
         self.b1 = params[D*M:D*M +M]
@@ -115,8 +106,6 @@ def evolution_strategy(f,population_size, sigma, lr, initial_params, num_iters):
         for j in range(population_size):
             params_try = params + sigma * N[j]
             R[j],acts[j],_ = f(params_try)
-            #print('This is the action {}'.format(acts[j]))
-            #print('This is the reward {}'.format(R[j]))
         m = R.mean()
         s = R.std()+0.001
         #print('This is s {}'.format(s))
@@ -147,7 +136,6 @@ def evolution_strategy(f,population_size, sigma, lr, initial_params, num_iters):
 def reward_function(params):
     #model=ANN(D,K)
     model = ANN(D, M, K)
-    env=Qprotocol(4)
     inpu=[0]
     #models = ANN(D, M, K)
     model.set_params(params)
@@ -157,8 +145,8 @@ def reward_function(params):
     episode_length = 0
     done = False
     counterr=0
-    state_n=env.reset(4,inpu)
-    obs = state_n[0]#np.concatenate((, state_n[1]), axis=None)#state_n#obs[0]
+    state_n=env.reset()
+    obs = list(np.concatenate(state_n).flat)#np.concatenate((, state_n[1]), axis=None)#state_n#obs[0]
     obs_dim= len(obs)
     if HISTORY_LENGTH >1:
         state =np.zeros(HISTORY_LENGTH*obs_dim)
@@ -169,8 +157,8 @@ def reward_function(params):
 #         #get the action
 #         #state=np.array(state)
         #print('This is the state {}'.format(state))
-        actiona = model.sample_action(state)
-        action=np.array(actions_list[actiona])
+        action = model.sample_action(state)
+        action=np.array(action)
 #        actionb = model.sample_action(state)
    #     action=np.array(actions_list[action])
         #action=(actiona,actionb)
@@ -180,7 +168,7 @@ def reward_function(params):
         new_state, reward, done,info=env.step(action)
 #         #update total reward
         #done=do
-        obs=new_state[0]
+        obs=list(np.concatenate(state_n).flat)
         #if do:
         #    counterr+=1
         #if counterr%2==0:
@@ -194,9 +182,19 @@ def reward_function(params):
             state[-obs_dim:]=obs
         else:
             state = obs
-    return episode_reward,actiona,episode_length
+    return episode_reward,action,episode_length
 #     
 if __name__=='__main__':
+    # Initialize environment and Q-array
+    seed=0
+    rows = 7
+    columns = 7
+    speed = 1.0
+    max_steps = 250
+    max_misses = 10
+    observation_type = 'pixel' 
+    env = Catch.Catch(rows=rows, columns=columns, speed=speed, max_steps=max_steps,
+                max_misses=max_misses, observation_type=observation_type, seed=seed)
     model = ANN(D,M,K)
     if len(sys.argv) > 1 and sys.argv[1] =='play':
         #play with a saved model
